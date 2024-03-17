@@ -1,8 +1,14 @@
 use std::fmt::Display;
 
 use crate::{chunk_type::ChunkType, Error, Result};
-pub struct Chunk {
+mod crc;
 
+#[derive(Debug)]
+pub struct Chunk {
+    chunk_type: ChunkType,
+    length: usize,
+    crc: u32,
+    data: Vec<u8>,
 }
 
 impl TryFrom<&[u8]> for Chunk {
@@ -21,7 +27,8 @@ impl Display for Chunk {
 
 impl Chunk {
     fn new(chunk_type: ChunkType, data: Vec<u8>) -> Chunk {
-        todo!()
+        let mut crc = crc::Crc32::new();
+        Chunk {crc: crc.crc(&data[..]), length: data.len(), chunk_type, data }
     }
 
     fn length(&self) -> u32 {
