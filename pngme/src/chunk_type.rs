@@ -1,5 +1,6 @@
+#![allow(unused_variables, dead_code)]
 use crate::{Error,Result};
-use core::{fmt};
+use core::fmt;
 use std::convert;
 
 fn is_in_valid_range(b: u8) -> bool {
@@ -16,11 +17,11 @@ pub struct ChunkType {
 }
 
 impl ChunkType {
-    fn bytes(&self) -> [u8; 4] {
+    pub fn bytes(&self) -> [u8; 4] {
         self.repr
     }
 
-    fn is_valid(&self) -> bool {
+    pub fn is_valid(&self) -> bool {
         // to be valid each byte has to be between 65-90 and 97-122
         // also bit 5 of byte 3 has to be set to 0 (reserved bit)
         for (i, byte) in self.repr.into_iter().enumerate() {
@@ -35,19 +36,19 @@ impl ChunkType {
         true
     }
 
-    fn is_critical(&self) -> bool {
+    pub fn is_critical(&self) -> bool {
         !is_fifth_bit_set(self.repr[0])
     }
 
-    fn is_public(&self) -> bool {
+    pub fn is_public(&self) -> bool {
         !is_fifth_bit_set(self.repr[1])
     }
 
-    fn is_reserved_bit_valid(&self) -> bool {
+    pub fn is_reserved_bit_valid(&self) -> bool {
         !is_fifth_bit_set(self.repr[2])
     }
 
-    fn is_safe_to_copy(&self) -> bool {
+    pub fn is_safe_to_copy(&self) -> bool {
         is_fifth_bit_set(self.repr[3])
     }
 }

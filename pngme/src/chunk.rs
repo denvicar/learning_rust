@@ -1,58 +1,110 @@
-use std::fmt::Display;
+#![allow(unused_variables, dead_code)]
+use std::fmt;
 
 use crate::{chunk_type::ChunkType, Error, Result};
-mod crc;
+use crc::{CRC_32_ISO_HDLC, Crc};
+
+const PNG32: Crc<u32> = Crc::<u32>::new(&CRC_32_ISO_HDLC);
 
 #[derive(Debug)]
 pub struct Chunk {
     chunk_type: ChunkType,
-    length: usize,
+    length: u32,
     crc: u32,
     data: Vec<u8>,
 }
+
+#[derive(Debug)]
+struct ChunkError;
+
+impl fmt::Display for ChunkError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "unable to process chunk")
+    }
+}
+
+impl std::error::Error for ChunkError {}
+
 
 impl TryFrom<&[u8]> for Chunk {
     type Error = Error;
 
     fn try_from(value: &[u8]) -> Result<Self> {
-        todo!()
+        let mut  value_iter = value.iter();
+        let mut bytes: Vec<u8> = value_iter.by_ref().take(4).map(|&b| b).collect();
+        let length = u32::from_be_bytes(bytes[..].try_into()?);
+        bytes = value_iter.by_ref().take(4).map(|&b| b).collect();
+        
+        let bytes: [u8;4] = bytes[..].try_into()?;   
+        let chunk_type = ChunkType::try_from(bytes)?;  
+        if !chunk_type.is_valid()  {
+            return Err(Box::new(ChunkError));
+        }
+
+        let data: Vec<_> = value_iter.map(|&v| v).collect();
+        if data.len() < 4 {
+            return Err(Box::new(ChunkError));
+        }
+
+        let (data, crc) = data.split_at(data.len()-4);
+        if data.len() as u32 != length {
+            return Err(Box::new(ChunkError));
+        }
+        let crc = u32::from_be_bytes(crc.try_into()?);
+        let mut digest = PNG32.digest();
+        digest.update(&[chunk_type.bytes().as_slice(), data].concat());
+
+        if digest.finalize() != crc {
+            return Err(Box::new(ChunkError));
+        }
+
+
+       Ok( Chunk { data: data.to_vec(), length, crc, chunk_type } )
     }
 }
 
-impl Display for Chunk {
+impl fmt::Display for Chunk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        write!(f, "Length {} Type {} CRC {}", self.length, self.chunk_type, self.crc)
     }
 }
 
 impl Chunk {
-    fn new(chunk_type: ChunkType, data: Vec<u8>) -> Chunk {
-        let mut crc = crc::Crc32::new();
-        Chunk {crc: crc.crc(&data[..]), length: data.len(), chunk_type, data }
+    pub fn new(chunk_type: ChunkType, data: Vec<u8>) -> Chunk {
+        let mut digest = PNG32.digest();
+        digest.update(&[chunk_type.bytes().as_slice(), &data].concat());
+        Chunk {crc: digest.finalize(), length: data.len() as u32, chunk_type, data }
     }
 
-    fn length(&self) -> u32 {
-        todo!()
+    pub fn length(&self) -> u32 {
+        self.length
     }
 
-    fn chunk_type(&self) -> &ChunkType {
-        todo!()
+    pub fn chunk_type(&self) -> &ChunkType {
+        &self.chunk_type
     }
 
-    fn data(&self) -> &[u8] {
-        todo!()
+    pub fn data(&self) -> &[u8] {
+        &self.data
     }
 
-    fn crc(&self) -> u32 {
-        todo!()
+    pub fn crc(&self) -> u32 {
+        self.crc
     }
 
     fn data_as_string(&self) -> Result<String> {
-        todo!()
+        Ok(String::from_utf8(self.data.clone())?)
     }
     
     fn as_bytes(&self) -> Vec<u8> {
-        todo!()
+        self.length
+            .to_be_bytes()
+            .iter()
+            .chain(self.chunk_type.bytes().iter())
+            .chain(self.data.iter())
+            .chain(self.crc.to_be_bytes().iter())
+            .copied()
+            .collect()
     }
 }
 
