@@ -1,5 +1,5 @@
 #![allow(unused_variables, dead_code)]
-use crate::{Error,Result};
+use crate::{Error, Result};
 use core::fmt;
 use std::convert;
 
@@ -13,7 +13,7 @@ fn is_fifth_bit_set(b: u8) -> bool {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ChunkType {
-    repr: [u8;4],
+    repr: [u8; 4],
 }
 
 impl ChunkType {
@@ -74,20 +74,20 @@ impl std::str::FromStr for ChunkType {
                 return Err(Box::new(ChunkTypeError));
             }
         }
-        Ok (ChunkType { repr: bytes })
+        Ok(ChunkType { repr: bytes })
     }
 }
 
 impl std::fmt::Display for ChunkType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
-        write!(f,"{}",std::str::from_utf8(self.repr.as_slice()).unwrap())
+        write!(f, "{}", std::str::from_utf8(self.repr.as_slice()).unwrap())
     }
 }
 
-impl convert::TryFrom<[u8;4]> for ChunkType {
+impl convert::TryFrom<[u8; 4]> for ChunkType {
     type Error = Error;
 
-    fn try_from(value: [u8;4]) -> Result<Self> {
+    fn try_from(value: [u8; 4]) -> Result<Self> {
         Ok(ChunkType { repr: value })
     }
 }
