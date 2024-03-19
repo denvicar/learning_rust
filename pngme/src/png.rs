@@ -2,14 +2,14 @@ use crate::chunk::Chunk;
 use crate::chunk_type::ChunkType;
 use crate::{Error, Result};
 use std::io::{BufReader, Read};
-struct Png {
+pub struct Png {
     chunks: Vec<Chunk>,
     signature: [u8; 8],
 }
 
 #[derive(Debug)]
-struct PngError {
-    msg: &'static str,
+pub struct PngError {
+    pub msg: &'static str,
 }
 
 impl std::fmt::Display for PngError {
