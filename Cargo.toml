@@ -3,6 +3,6 @@
 members = [
     "pngme",
     "cryptopals_challenges"
-, "grrs"]
+,  "life"]
 
 resolver = "2"
