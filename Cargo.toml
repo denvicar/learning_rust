@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "pngme",
+    "cryptopals_challenges"
+, "grrs"]
+
+resolver = "2"
