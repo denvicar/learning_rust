@@ -1,5 +1,18 @@
-//! Simple implementation in Rust of the game of life
-//! Just run the game, it will start with a random state and evolve from there
+//! Simple implementation in Rust of the game of life.
+//! 
+//! Just run the game, it will start with a random state and evolve from there.
+//! 
+//! ```
+//! use life::{random_board,next_board_state, render};
+//! let mut board = random_board(20,20);
+//! loop {
+//! #   let old = board.clone();
+//!     render(&board, &mut std::io::stdout());
+//!     board = next_board_state(&board);
+//! #   assert_ne!(old,board);
+//! #   break;
+//! }
+//! ```
 //!
 
 use std::{
@@ -9,12 +22,20 @@ use std::{
 };
 
 /// Returns a dead board of given width and height
-/// A dead board is a board composed of 0s
+/// 
+/// A dead board is a board composed of 0s (or false given that the board is made of booleans)
 fn dead_board(height: usize, width: usize) -> Vec<Vec<bool>> {
     vec![vec![false; width]; height]
 }
 
 /// Returns a random board of given size
+/// 
+/// ```
+/// use life::random_board;
+/// let board = random_board(20,20);
+/// assert!(board.len()==20);
+/// assert!(board[0].len()==20);
+/// ```
 pub fn random_board(height: usize, width: usize) -> Vec<Vec<bool>> {
     let mut board = dead_board(height, width);
     for row in &mut board {
@@ -41,13 +62,25 @@ pub fn render(board: &Vec<Vec<bool>>, mut output: impl io::Write) {
     write!(output, "{}", out).expect("error while trying to print board");
 }
 
-/// Calculates next board state given these rules:
-/// (note: a cell neighbours are the 8 adjacent and diagonal cells)
-/// (edge cells have only 5 neighbours; corner cells have only 3)
-/// 1: Any live cell with 0 or 1 live neighbors becomes dead, because of underpopulation
-/// 2: Any live cell with 2 or 3 live neighbors stays alive, because its neighborhood is just right
-/// 3: Any live cell with more than 3 live neighbors becomes dead, because of overpopulation
-/// 4: Any dead cell with exactly 3 live neighbors becomes alive, by reproduction
+/// Calculates next board state given a set of rules.
+/// 
+/// Rules are:
+/// 
+/// *(note: a cell neighbours are the 8 adjacent and diagonal cells)*
+/// 
+/// *(edge cells have only 5 neighbours; corner cells have only 3)*
+/// 
+/// 1. Any live cell with 0 or 1 live neighbors becomes dead, because of underpopulation
+/// 2. Any live cell with 2 or 3 live neighbors stays alive, because its neighborhood is just right
+/// 3. Any live cell with more than 3 live neighbors becomes dead, because of overpopulation
+/// 4. Any dead cell with exactly 3 live neighbors becomes alive, by reproduction
+/// 
+/// ```
+/// use life::next_board_state;
+/// let board = vec![vec![true,false],vec![true,true]];
+/// let expected = vec![vec![true, true], vec![true, true]];
+/// assert_eq!(expected, next_board_state(&board));
+/// ``` 
 pub fn next_board_state(old: &[Vec<bool>]) -> Vec<Vec<bool>> {
     let mut new = dead_board(old.len(), old[0].len());
     let mut neighbours_count;
@@ -96,6 +129,10 @@ fn get_neighbours_count(board: &[Vec<bool>], cell: (usize, usize)) -> u32 {
     }
 }
 
+/// Load a starting board from a file.
+/// 
+/// The board should be a plain text file with rows made of 1s and 0s to 
+/// indicate respectively an alive or dead cell.
 pub fn load_from_file<F: AsRef<Path>>(path: F) -> Vec<Vec<bool>> {
     let mut board = Vec::new();
     let mut row = Vec::new();
